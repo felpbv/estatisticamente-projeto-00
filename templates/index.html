@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Assistente - Restaurante Sabor da Serra</title>
+
+<style>
+    body {
+        background: radial-gradient(circle at top, #0a1a3d, #000000 80%);
+        margin: 0;
+        font-family: Arial, sans-serif;
+        color: white;
+    }
+    h1 {
+        text-align: center;
+        padding-top: 20px;
+        font-size: 32px;
+    }
+    #chat-container {
+        width: 60%;
+        height: 65vh;
+        margin: 20px auto;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 15px;
+        overflow-y: auto;
+    }
+    .msg {
+        padding: 10px 15px;
+        border-radius: 10px;
+        margin-bottom: 12px;
+        max-width: 80%;
+    }
+    .user {
+        background: #1f6feb;
+        align-self: flex-end;
+        margin-left: auto;
+    }
+    .bot {
+        background: #30363d;
+        border-left: 4px solid #58a6ff;
+    }
+    #input-area {
+        width: 60%;
+        margin: 0 auto;
+        display: flex;
+    }
+    #prompt {
+        flex: 1;
+        padding: 14px;
+        border-radius: 10px;
+        border: none;
+        font-size: 16px;
+    }
+    #enviar {
+        padding: 14px 22px;
+        margin-left: 10px;
+        background: #238636;
+        border: none;
+        border-radius: 10px;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+    }
+    #enviar:hover {
+        background: #2ea043;
+    }
+</style>
+
+</head>
+<body>
+
+<h1>Assistente - Restaurante Sabor da Serra</h1>
+
+<div id="chat-container"></div>
+
+<div id="input-area">
+    <input id="prompt" type="text" placeholder="Digite sua pergunta..." />
+    <button id="enviar">Enviar</button>
+</div>
+
+<script>
+    // Função para adicionar mensagens no chat
+    function addMessage(text, sender) {
+        const chat = document.getElementById("chat-container");
+        const msg = document.createElement("div");
+        msg.className = "msg " + sender;
+        msg.textContent = text;
+        chat.appendChild(msg);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    // Função executada quando o usuário envia uma mensagem
+    async function enviarMensagem() {
+        const input = document.getElementById("prompt");
+        const texto = input.value.trim();
+        if (!texto) return;
+
+        addMessage(texto, "user");
+        input.value = "";
+
+        try {
+            const response = await fetch("/perguntar?pergunta=" + encodeURIComponent(texto));
+            const data = await response.json();
+            addMessage(data.resposta, "bot");
+        } catch (error) {
+            addMessage("❌ Erro ao conectar com o servidor.", "bot");
+        }
+    }
+
+    // Botão enviar
+    document.getElementById("enviar").onclick = enviarMensagem;
+
+    // Permite enviar com Enter
+    document.getElementById("prompt").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") enviarMensagem();
+    });
+</script>
+
+</body>
+</html>

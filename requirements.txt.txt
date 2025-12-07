@@ -1,0 +1,6 @@
+Flask==2.3.2
+gunicorn
+openai
+pandas
+numpy
+python-dotenv
