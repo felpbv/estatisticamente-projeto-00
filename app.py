@@ -9,7 +9,7 @@ from openai import OpenAI
 import os
 
 # Inicializa cliente OpenAI
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(api_key=os.getenv("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"))
 
 # ================================================
 # 🚀 INICIALIZAÇÃO DO FLASK + CORS
