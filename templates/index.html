@@ -1,120 +1,279 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Assistente - Restaurante Sabor da Serra</title>
+    <meta charset="UTF-8">
+    <title>Assistente Virtual - Sabores da Terra</title>
 
-<style>
-    body {
-        background: radial-gradient(circle at top, #0a1a3d, #000000 80%);
-        margin: 0;
-        font-family: Arial, sans-serif;
-        color: white;
-    }
-    h1 {
-        text-align: center;
-        padding-top: 20px;
-        font-size: 32px;
-    }
-    #chat-container {
-        width: 60%;
-        height: 65vh;
-        margin: 20px auto;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 15px;
-        overflow-y: auto;
-    }
-    .msg {
-        padding: 10px 15px;
-        border-radius: 10px;
-        margin-bottom: 12px;
-        max-width: 80%;
-    }
-    .user {
-        background: #1f6feb;
-        align-self: flex-end;
-        margin-left: auto;
-    }
-    .bot {
-        background: #30363d;
-        border-left: 4px solid #58a6ff;
-    }
-    #input-area {
-        width: 60%;
-        margin: 0 auto;
-        display: flex;
-    }
-    #prompt {
-        flex: 1;
-        padding: 14px;
-        border-radius: 10px;
-        border: none;
-        font-size: 16px;
-    }
-    #enviar {
-        padding: 14px 22px;
-        margin-left: 10px;
-        background: #238636;
-        border: none;
-        border-radius: 10px;
-        color: white;
-        font-size: 16px;
-        cursor: pointer;
-    }
-    #enviar:hover {
-        background: #2ea043;
-    }
-</style>
+    <!-- ===============================
+         📱 CONFIGURAÇÃO PARA MOBILE
+         =============================== -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- ===============================
+         🎨 ESTILO BASEADO NO LOGO
+         =============================== -->
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: linear-gradient(180deg, #5C3A21, #7A4A2E);
+            color: #F5E6C8;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 420px;
+            height: 95vh;
+            background-color: #3E2615;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ===============================
+           🖼️ ÁREA DO LOGO
+           =============================== */
+        .logo-area {
+            background-color: #F5E6C8;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .logo-area img {
+            max-height: 60px;
+        }
+
+        /* ===============================
+           💬 MENSAGENS
+           =============================== */
+        .messages {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+        }
+
+        .message {
+            padding: 10px 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+
+        .bot {
+            background-color: #6D4B2F;
+            color: #F5E6C8;
+        }
+
+        .user {
+            background-color: #C79A63;
+            color: #3E2615;
+            align-self: flex-end;
+        }
+
+        .typing {
+            font-style: italic;
+            opacity: 0.8;
+        }
+
+        /* ===============================
+           ❓ PERGUNTAS FREQUENTES
+           =============================== */
+        .faq {
+            padding: 10px;
+            background-color: #4A2C19;
+        }
+
+        .faq button {
+            width: 100%;
+            background-color: #6D4B2F;
+            color: #F5E6C8;
+            border: none;
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 6px;
+            cursor: pointer;
+        }
+
+        /* ===============================
+           ⌨️ INPUT
+           =============================== */
+        .input-area {
+            display: flex;
+            padding: 10px;
+            background-color: #2A180D;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .input-area button {
+            margin-left: 8px;
+            background-color: #C79A63;
+            border: none;
+            border-radius: 8px;
+            padding: 0 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* ===============================
+           📱 MOBILE
+           =============================== */
+        @media (max-width: 480px) {
+            .chat-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-<h1>Assistente - Restaurante Sabor da Serra</h1>
+<div class="chat-container">
 
-<div id="chat-container"></div>
+    <!-- 🖼️ LOGO -->
+    <div class="logo-area">
+        <img src="/static/logo.png" alt="Sabores da Terra">
+    </div>
 
-<div id="input-area">
-    <input id="prompt" type="text" placeholder="Digite sua pergunta..." />
-    <button id="enviar">Enviar</button>
+    <!-- 💬 MENSAGENS -->
+    <div class="messages" id="messages"></div>
+
+    <!-- ❓ FAQ -->
+    <div class="faq" id="faq"></div>
+
+    <!-- ⌨️ INPUT -->
+    <div class="input-area">
+        <input type="text" id="input" placeholder="Digite sua dúvida..." />
+        <button onclick="enviarMensagem()">Enviar</button>
+    </div>
+
 </div>
 
+<!-- ===============================
+     🧠 JAVASCRIPT
+     =============================== -->
 <script>
-    // Função para adicionar mensagens no chat
-    function addMessage(text, sender) {
-        const chat = document.getElementById("chat-container");
-        const msg = document.createElement("div");
-        msg.className = "msg " + sender;
-        msg.textContent = text;
-        chat.appendChild(msg);
-        chat.scrollTop = chat.scrollHeight;
-    }
+    /* =========================================
+       ✏️ CONFIGURAÇÕES EDITÁVEIS
+       ========================================= */
 
-    // Função executada quando o usuário envia uma mensagem
-    async function enviarMensagem() {
-        const input = document.getElementById("prompt");
+    const mensagemBoasVindas = 
+        "Olá, sou a assistente virtual do Restaurante Sabores da Terra 😊<br>É só digitar a sua dúvida.";
+
+    const perguntasFrequentes = [
+        "Aceita VR?",
+        "Qual o horário de funcionamento?",
+        "Tem cardápio online?",
+        "Tem alguma promoção?"
+    ];
+
+    /* =========================================
+       🔧 ELEMENTOS
+       ========================================= */
+    const messages = document.getElementById("messages");
+    const input = document.getElementById("input");
+    const faqDiv = document.getElementById("faq");
+
+    /* =========================================
+       👋 BOAS-VINDAS
+       ========================================= */
+    adicionarMensagem(mensagemBoasVindas, "bot");
+
+    perguntasFrequentes.forEach(pergunta => {
+        const btn = document.createElement("button");
+        btn.innerText = pergunta;
+        btn.onclick = () => enviarPerguntaFAQ(pergunta);
+        faqDiv.appendChild(btn);
+    });
+
+    /* =========================================
+       ⌨️ ENTER ENVIA
+       ========================================= */
+    input.addEventListener("keypress", function (e) {
+        if (e.key === "Enter") {
+            enviarMensagem();
+        }
+    });
+
+    /* =========================================
+       📤 ENVIAR MENSAGEM
+       ========================================= */
+    function enviarMensagem() {
         const texto = input.value.trim();
         if (!texto) return;
 
-        addMessage(texto, "user");
+        adicionarMensagem(texto, "user");
         input.value = "";
 
-        try {
-            const response = await fetch("/perguntar?pergunta=" + encodeURIComponent(texto));
-            const data = await response.json();
-            addMessage(data.resposta, "bot");
-        } catch (error) {
-            addMessage("❌ Erro ao conectar com o servidor.", "bot");
-        }
+        mostrarDigitando();
+
+        fetch(`/perguntar?pergunta=${encodeURIComponent(texto)}`)
+            .then(res => res.json())
+            .then(data => {
+                removerDigitando();
+                adicionarMensagem(data.resposta, "bot");
+            })
+            .catch(() => {
+                removerDigitando();
+                adicionarMensagem("Erro ao conectar com o servidor.", "bot");
+            });
     }
 
-    // Botão enviar
-    document.getElementById("enviar").onclick = enviarMensagem;
+    function enviarPerguntaFAQ(pergunta) {
+        adicionarMensagem(pergunta, "user");
+        mostrarDigitando();
 
-    // Permite enviar com Enter
-    document.getElementById("prompt").addEventListener("keypress", function(e) {
-        if (e.key === "Enter") enviarMensagem();
-    });
+        fetch(`/perguntar?pergunta=${encodeURIComponent(pergunta)}`)
+            .then(res => res.json())
+            .then(data => {
+                removerDigitando();
+                adicionarMensagem(data.resposta, "bot");
+            })
+            .catch(() => {
+                removerDigitando();
+                adicionarMensagem("Erro ao conectar com o servidor.", "bot");
+            });
+    }
+
+    /* =========================================
+       💬 FUNÇÕES AUXILIARES
+       ========================================= */
+    function adicionarMensagem(texto, tipo) {
+        const div = document.createElement("div");
+        div.className = `message ${tipo}`;
+        div.innerHTML = texto;
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    function mostrarDigitando() {
+        const div = document.createElement("div");
+        div.className = "message bot typing";
+        div.id = "digitando";
+        div.innerText = "Digitando...";
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    function removerDigitando() {
+        const el = document.getElementById("digitando");
+        if (el) el.remove();
+    }
 </script>
 
 </body>
