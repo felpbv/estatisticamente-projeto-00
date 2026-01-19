@@ -74,7 +74,7 @@ def buscar_contexto(pergunta, df, top_k=3):
 # 5) Gera a resposta do modelo com RAG
 # ================================================
 historico = [
-    {"role": "system", "content": "Você é um assistente especializado no Cartão MAIS. Seja informal e direto. Caso não saiba a resposta fale para o cliente chamar a Assistente virtual do whatsApp Cleo pelo número (XX) 9999999999"}
+    {"role": "system", "content": "Você é um assistente especializado no Cartão MAIS. Seja cordial e tente ajudar o cliente, pode ser um tom informal. Caso você não ache a nenhuma resposta na base de conhecimento, sugira para o cliente que entre em contato com a assistente Cleo via WhatsApp no número (xx) 999999-9999, mas apenas quando não achar nenhuma resposta na base de conhecimento."}
 ]
 
 def gerar_resposta(pergunta, df):
