@@ -4,20 +4,20 @@
     <meta charset="UTF-8">
     <title>Assistente Virtual - Sabores da Terra</title>
 
-    <!-- 📱 Mobile -->
+    <!-- ===============================
+         📱 CONFIGURAÇÃO PARA MOBILE
+         =============================== -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- 🎨 ESTILO -->
+    <!-- ===============================
+         🎨 ESTILO BASEADO NO LOGO
+         =============================== -->
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
         body {
             margin: 0;
             font-family: Arial, Helvetica, sans-serif;
-            background: #1E1E22;
-            color: #FFFFFF;
+            background: linear-gradient(180deg, #5C3A21, #7A4A2E);
+            color: #F5E6C8;
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -28,7 +28,7 @@
             width: 100%;
             max-width: 420px;
             height: 95vh;
-            background-color: #2A2A30;
+            background-color: #3E2615;
             border-radius: 16px;
             box-shadow: 0 8px 30px rgba(0,0,0,0.4);
             display: flex;
@@ -36,19 +36,22 @@
             overflow: hidden;
         }
 
-        /* 🖼️ LOGO */
+        /* ===============================
+           🖼️ ÁREA DO LOGO
+           =============================== */
         .logo-area {
-            background-color: #1E1E22;
-            padding: 16px;
+            background-color: #F5E6C8;
+            padding: 12px;
             text-align: center;
         }
 
         .logo-area img {
-            max-height: 120px;
-            max-width: 100%;
+            max-height: 60px;
         }
 
-        /* 💬 MENSAGENS */
+        /* ===============================
+           💬 MENSAGENS
+           =============================== */
         .messages {
             flex: 1;
             padding: 12px;
@@ -64,13 +67,13 @@
         }
 
         .bot {
-            background-color: #3A3A42;
-            color: #FFFFFF;
+            background-color: #6D4B2F;
+            color: #F5E6C8;
         }
 
         .user {
-            background: linear-gradient(135deg, #4C6FFF, #B14DFF);
-            color: #FFFFFF;
+            background-color: #C79A63;
+            color: #3E2615;
             align-self: flex-end;
         }
 
@@ -79,16 +82,18 @@
             opacity: 0.8;
         }
 
-        /* ❓ FAQ */
+        /* ===============================
+           ❓ PERGUNTAS FREQUENTES
+           =============================== */
         .faq {
             padding: 10px;
-            background-color: #2A2A30;
+            background-color: #4A2C19;
         }
 
         .faq button {
             width: 100%;
-            background-color: #3A3A42;
-            color: #FFFFFF;
+            background-color: #6D4B2F;
+            color: #F5E6C8;
             border: none;
             border-radius: 8px;
             padding: 8px;
@@ -96,11 +101,13 @@
             cursor: pointer;
         }
 
-        /* ⌨️ INPUT */
+        /* ===============================
+           ⌨️ INPUT
+           =============================== */
         .input-area {
             display: flex;
             padding: 10px;
-            background-color: #1E1E22;
+            background-color: #2A180D;
         }
 
         .input-area input {
@@ -114,8 +121,7 @@
 
         .input-area button {
             margin-left: 8px;
-            background: linear-gradient(135deg, #4C6FFF, #B14DFF);
-            color: #FFFFFF;
+            background-color: #C79A63;
             border: none;
             border-radius: 8px;
             padding: 0 16px;
@@ -123,7 +129,9 @@
             cursor: pointer;
         }
 
-        /* 📱 MOBILE */
+        /* ===============================
+           📱 MOBILE
+           =============================== */
         @media (max-width: 480px) {
             .chat-container {
                 height: 100vh;
@@ -156,22 +164,34 @@
 
 </div>
 
-<!-- 🧠 JAVASCRIPT -->
+<!-- ===============================
+     🧠 JAVASCRIPT
+     =============================== -->
 <script>
-    const mensagemBoasVindas =
-        "Olá, sou a assistente virtual da (NOME DA SUA EMPRESA) 😊<br>É só digitar a sua dúvida.";
+    /* =========================================
+       ✏️ CONFIGURAÇÕES EDITÁVEIS
+       ========================================= */
+
+    const mensagemBoasVindas = 
+        "Olá, sou a assistente virtual do Restaurante Sabores da Terra 😊<br>É só digitar a sua dúvida.";
 
     const perguntasFrequentes = [
-        "Gostaria de saber mais sobre Anuidade do Cartão Mais?",
-        "Onde posso pagar minha fatura?",
-        "Como eu Faço pra aumentar meu limite",
-        "Quero Saber mais sobre seguro e assistência do cartão Mais?"
+        "Aceita VR?",
+        "Qual o horário de funcionamento?",
+        "Tem cardápio online?",
+        "Tem alguma promoção?"
     ];
 
+    /* =========================================
+       🔧 ELEMENTOS
+       ========================================= */
     const messages = document.getElementById("messages");
     const input = document.getElementById("input");
     const faqDiv = document.getElementById("faq");
 
+    /* =========================================
+       👋 BOAS-VINDAS
+       ========================================= */
     adicionarMensagem(mensagemBoasVindas, "bot");
 
     perguntasFrequentes.forEach(pergunta => {
@@ -181,18 +201,25 @@
         faqDiv.appendChild(btn);
     });
 
+    /* =========================================
+       ⌨️ ENTER ENVIA
+       ========================================= */
     input.addEventListener("keypress", function (e) {
         if (e.key === "Enter") {
             enviarMensagem();
         }
     });
 
+    /* =========================================
+       📤 ENVIAR MENSAGEM
+       ========================================= */
     function enviarMensagem() {
         const texto = input.value.trim();
         if (!texto) return;
 
         adicionarMensagem(texto, "user");
         input.value = "";
+
         mostrarDigitando();
 
         fetch(`/perguntar?pergunta=${encodeURIComponent(texto)}`)
@@ -223,6 +250,9 @@
             });
     }
 
+    /* =========================================
+       💬 FUNÇÕES AUXILIARES
+       ========================================= */
     function adicionarMensagem(texto, tipo) {
         const div = document.createElement("div");
         div.className = `message ${tipo}`;
@@ -248,6 +278,3 @@
 
 </body>
 </html>
-
-
-
