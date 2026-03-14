@@ -5,5 +5,7 @@ pandas
 numpy
 python-dotenv
 flask-cors
-
+flask
+pypdf
+gunicorn
 
