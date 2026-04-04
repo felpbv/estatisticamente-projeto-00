@@ -86,7 +86,7 @@ def gerar_embeddings(df):
     textos = df["informacao"].tolist()
 
     response = client.embeddings.create(
-        model="text-embedding-3-small",
+        model="text-embedding-3-large",
         input=textos
     )
 
@@ -179,6 +179,20 @@ def transformar_links(texto):
     return re.sub(url_pattern, substituir, texto)
 
 # ================================================
+# 📂 TRANSFORMA LINKS
+# ================================================
+def transformar_links_markdown(texto):
+    pattern = r'\[(.*?)\]\((https?://[^\s]+)\)'
+
+    def substituir(match):
+        label = match.group(1)
+        url = match.group(2)
+
+        return f'<a href="{url}" target="_blank" style="color:#c58b2a;font-weight:bold;">{label}</a>'
+
+    return re.sub(pattern, substituir, texto)
+
+# ================================================
 # 🤖 HISTÓRICO DO CHAT
 # ================================================
 historico = [
@@ -235,7 +249,7 @@ Pergunta do cliente:
     )
 
     resposta = response.choices[0].message.content
-    
+    resposta = remover_markdown_links(resposta)
     resposta = formatar_resposta(resposta)
     resposta = transformar_links(resposta)
     
