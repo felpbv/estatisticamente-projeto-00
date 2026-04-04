@@ -193,6 +193,13 @@ def transformar_links_markdown(texto):
     return re.sub(pattern, substituir, texto)
 
 # ================================================
+# 📂 REMOVEN RMARKDOWNS LINKS
+# ================================================
+def remover_markdown_links(texto):
+    pattern = r'\[.*?\]\((https?://[^\s]+)\)'
+    return re.sub(pattern, r'\1', texto)
+
+# ================================================
 # 🤖 HISTÓRICO DO CHAT
 # ================================================
 historico = [
