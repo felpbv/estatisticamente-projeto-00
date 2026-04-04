@@ -147,7 +147,7 @@ def buscar_contexto(pergunta, df, top_k=4):
 
     return contexto
 
- import re
+import re
 
 # ================================================
 # 📂 qUEBRA DE LINHAS
