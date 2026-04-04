@@ -147,6 +147,36 @@ def buscar_contexto(pergunta, df, top_k=4):
 
     return contexto
 
+ import re
+
+# ================================================
+# 📂 qUEBRA DE LINHAS
+# ================================================
+
+def formatar_resposta(texto):
+    texto = texto.replace("•", "<br>•")
+    texto = texto.replace("- ", "<br>• ")
+    return texto
+# ================================================
+# 📂 TRANSFORMA LINKS
+# ================================================
+def transformar_links(texto):
+    url_pattern = r'(https?://[^\s]+)'
+
+    def substituir(match):
+        url = match.group(0)
+
+        # define texto baseado no conteúdo
+        if "cardapio" in url.lower():
+            texto_link = "📖 Ver cardápio"
+        elif "reserva" in url.lower():
+            texto_link = "📅 Fazer reserva"
+        else:
+            texto_link = "🔗 Acessar link"
+
+        return f'<a href="{url}" target="_blank" style="color:#c58b2a;font-weight:bold;">{texto_link}</a>'
+
+    return re.sub(url_pattern, substituir, texto)
 
 # ================================================
 # 🤖 HISTÓRICO DO CHAT
@@ -161,6 +191,17 @@ Seu nome é Mineirinho.
 Responda de forma educada e clara com um leve sotaque mineiro.
 Quando houver links, envie o hiperlink para o cliente clicar.
 Responda de maneira simples, curta e em tópicos, para que a resposta seja simples e rápida.
+
+FORMATAÇÃO OBRIGATÓRIA:
+- Sempre responda em lista com quebra de linha
+- Use um item por linha
+- Use este formato:
+
+• Item 1  
+• Item 2  
+• Item 3  
+
+Nunca escreva tudo em uma única linha.
 """
     }
 ]
@@ -194,7 +235,10 @@ Pergunta do cliente:
     )
 
     resposta = response.choices[0].message.content
-
+    
+    resposta = formatar_resposta(resposta)
+    resposta = transformar_links(resposta)
+    
     historico.append({
         "role": "assistant",
         "content": resposta
