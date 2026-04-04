@@ -86,7 +86,7 @@ def gerar_embeddings(df):
     textos = df["informacao"].tolist()
 
     response = client.embeddings.create(
-        model="text-embedding-3-large",
+        model="text-embedding-3-small",
         input=textos
     )
 
