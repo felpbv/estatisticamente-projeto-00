@@ -130,7 +130,7 @@ def transformar_links_markdown(texto):
             margin-top:6px;
             padding:6px 10px;
             background:#C79A63;
-            color:#3E2615;
+            color:#4A2C19;
             border-radius:8px;
             font-weight:bold;
             text-decoration:none;
