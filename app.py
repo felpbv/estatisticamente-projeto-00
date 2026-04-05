@@ -189,6 +189,7 @@ FORMATAÇÃO OBRIGATÓRIA:
 • Item 3  
 
 Nunca escreva tudo em uma única linha.
+"""
     }
 ]
 
