@@ -26,16 +26,12 @@ app = Flask(__name__)
 CORS(app)
 
 # ================================================
-# 📚 CARREGAR CSV
+# 📚 BASE
 # ================================================
 def carregar_base_csv(caminho):
     return pd.read_csv(caminho)
 
-# ================================================
-# 📄 CARREGAR PDF
-# ================================================
 def carregar_base_pdf(caminho_pdf):
-
     reader = PdfReader(caminho_pdf)
     textos = []
 
@@ -50,16 +46,11 @@ def carregar_base_pdf(caminho_pdf):
         "informacao": textos
     })
 
-# ================================================
-# ✂️ CHUNKING
-# ================================================
 def criar_chunks(df):
-
     novos = []
 
     for _, row in df.iterrows():
         texto = row["informacao"]
-
         chunks = [texto[i:i+400] for i in range(0, len(texto), 400)]
 
         for chunk in chunks:
@@ -74,7 +65,6 @@ def criar_chunks(df):
 # 🧠 EMBEDDINGS
 # ================================================
 def gerar_embeddings(df):
-
     textos = df["informacao"].tolist()
 
     response = client.embeddings.create(
@@ -83,7 +73,6 @@ def gerar_embeddings(df):
     )
 
     df["embedding"] = [e.embedding for e in response.data]
-
     return df
 
 def salvar_embeddings(df):
@@ -103,7 +92,7 @@ def cosine_similarity(v1, v2):
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
 # ================================================
-# 🔎 BUSCAR CONTEXTO
+# 🔎 BUSCA
 # ================================================
 def buscar_contexto(pergunta, df, top_k=4):
 
@@ -118,37 +107,14 @@ def buscar_contexto(pergunta, df, top_k=4):
 
     top = df.sort_values("similaridade", ascending=False).head(top_k)
 
-    contexto = "\n".join(
+    return [
         f"{row['categoria']}: {row['informacao']}"
         for _, row in top.iterrows()
-    )
-
-    return contexto
+    ]
 
 # ================================================
-# 🎨 FORMATAÇÃO
+# 🎨 FORMATAÇÃO PROFISSIONAL
 # ================================================
-def formatar_resposta(texto):
-    texto = texto.replace("•", "<br>•")
-    texto = texto.replace("- ", "<br>• ")
-    return texto
-
-def transformar_links(texto):
-    url_pattern = r'(https?://[^\s]+)'
-
-    def substituir(match):
-        url = match.group(0)
-
-        if "cardapio" in url.lower():
-            texto_link = "📖 Ver cardápio"
-        elif "reserva" in url.lower():
-            texto_link = "📅 Fazer reserva"
-        else:
-            texto_link = "🔗 Acessar link"
-
-        return f'<a href="{url}" target="_blank" style="color:#c58b2a;font-weight:bold;">{texto_link}</a>'
-
-    return re.sub(url_pattern, substituir, texto)
 
 def transformar_links_markdown(texto):
     pattern = r'\[(.*?)\]\((https?://[^\s]+)\)'
@@ -157,9 +123,47 @@ def transformar_links_markdown(texto):
         label = match.group(1)
         url = match.group(2)
 
-        return f'<a href="{url}" target="_blank" style="color:#c58b2a;font-weight:bold;">{label}</a>'
+        return f'''
+        <a href="{url}" target="_blank"
+        style="
+            display:inline-block;
+            margin-top:6px;
+            padding:6px 10px;
+            background:#C79A63;
+            color:#3E2615;
+            border-radius:8px;
+            font-weight:bold;
+            text-decoration:none;
+        ">
+            {label}
+        </a>
+        '''
 
     return re.sub(pattern, substituir, texto)
+
+
+def garantir_lista(texto):
+    """
+    Se o modelo não retornar em lista, força formato
+    """
+    if "•" not in texto:
+        linhas = texto.split(". ")
+        texto = "\n".join([f"• {l.strip()}" for l in linhas if l.strip()])
+
+    return texto
+
+
+def formatar_resposta(texto):
+
+    texto = garantir_lista(texto)
+
+    # quebra correta
+    texto = re.sub(r'\s*•', '<br>•', texto)
+
+    # remove quebra inicial
+    texto = texto.lstrip("<br>")
+
+    return texto
 
 # ================================================
 # 🤖 HISTÓRICO
@@ -168,39 +172,35 @@ historico = [
     {
         "role": "system",
         "content": """
-Você é um assistente especializado no restaurante Fogão Mineiro.
-Seu nome é Mineirinho.
+Você é o Mineirinho, assistente do restaurante Fogão Mineiro.
 
-Responda de forma educada e clara com um leve sotaque mineiro.
-Quando houver links, envie o hiperlink para o cliente clicar.
-Responda de maneira simples, curta e em tópicos, para que a resposta seja simples e rápida.
+Responda:
+- Em tópicos
+- Curto
+- Claro
+- Com links clicáveis
 
-FORMATAÇÃO OBRIGATÓRIA:
-- Sempre responda em lista com quebra de linha
-- Use um item por linha
-- Use este formato:
-
+Formato obrigatório:
 • Item 1  
 • Item 2  
 • Item 3  
-
-Nunca escreva tudo em uma única linha.
 """
     }
 ]
 
 # ================================================
-# 🤖 GERAR RESPOSTA
+# 🤖 RESPOSTA
 # ================================================
 def gerar_resposta(pergunta, df):
 
-    contexto = buscar_contexto(pergunta, df)
+    contextos = buscar_contexto(pergunta, df)
+
+    contexto = "\n".join(contextos)
 
     historico.append({
         "role": "user",
         "content": f"""
 Base:
-
 {contexto}
 
 Pergunta:
@@ -215,9 +215,8 @@ Pergunta:
 
     resposta = response.choices[0].message.content
 
-    # 🔥 processamento correto
+    # 🔥 PROCESSAMENTO FINAL
     resposta = transformar_links_markdown(resposta)
-    resposta = transformar_links(resposta)
     resposta = formatar_resposta(resposta)
 
     historico.append({
@@ -228,38 +227,21 @@ Pergunta:
     return resposta
 
 # ================================================
-# 🚀 CARREGAR BASE
+# 🚀 CARREGAMENTO
 # ================================================
-print("🔄 Inicializando base...")
+print("🔄 Inicializando...")
 
-# if os.path.exists(ARQUIVO_EMBEDDINGS):
-
-#     print("⚡ Carregando embeddings...")
-#     df_base = carregar_embeddings()
-
-if False:
-
-    # print("⚡ Carregando embeddings...")
+if os.path.exists(ARQUIVO_EMBEDDINGS):
+    print("⚡ Carregando embeddings...")
     df_base = carregar_embeddings()
-
 else:
-
-    print("📚 CSV...")
+    print("📚 Criando base...")
     df_csv = carregar_base_csv("base-restaurante.csv")
-
-    print("📄 PDF...")
     df_pdf = carregar_base_pdf("cardapio.pdf")
 
-    print("🔗 Unindo...")
     df_base = pd.concat([df_csv, df_pdf], ignore_index=True)
-
-    print("✂️ Chunking...")
     df_base = criar_chunks(df_base)
-
-    print("🧠 Embeddings...")
     df_base = gerar_embeddings(df_base)
-
-    print("💾 Salvando...")
     salvar_embeddings(df_base)
 
 print("✅ Pronto!")
