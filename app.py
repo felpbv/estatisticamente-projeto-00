@@ -9,8 +9,15 @@ from openai import OpenAI
 from pypdf import PdfReader
 import pickle
 import os
+import re
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# ================================================
+# 🔥 CONFIG
+# ================================================
+EMBEDDING_MODEL = "text-embedding-3-large"
+ARQUIVO_EMBEDDINGS = f"embeddings_{EMBEDDING_MODEL}.pkl"
 
 # ================================================
 # 🚀 FLASK
@@ -22,11 +29,7 @@ CORS(app)
 # 📚 CARREGAR CSV
 # ================================================
 def carregar_base_csv(caminho):
-
-    df = pd.read_csv(caminho)
-
-    return df
-
+    return pd.read_csv(caminho)
 
 # ================================================
 # 📄 CARREGAR PDF
@@ -34,37 +37,27 @@ def carregar_base_csv(caminho):
 def carregar_base_pdf(caminho_pdf):
 
     reader = PdfReader(caminho_pdf)
-
     textos = []
 
     for page in reader.pages:
-
         texto = page.extract_text()
-
         if texto:
-
-            # divide texto em pedaços menores
             chunks = [texto[i:i+500] for i in range(0, len(texto), 500)]
-
             textos.extend(chunks)
 
-    df_pdf = pd.DataFrame({
+    return pd.DataFrame({
         "categoria": "cardapio",
         "informacao": textos
     })
 
-    return df_pdf
-
-
 # ================================================
-# ✂️ CHUNKING (para textos grandes)
+# ✂️ CHUNKING
 # ================================================
 def criar_chunks(df):
 
     novos = []
 
     for _, row in df.iterrows():
-
         texto = row["informacao"]
 
         chunks = [texto[i:i+400] for i in range(0, len(texto), 400)]
@@ -77,16 +70,15 @@ def criar_chunks(df):
 
     return pd.DataFrame(novos)
 
-
 # ================================================
-# 🧠 GERAR EMBEDDINGS
+# 🧠 EMBEDDINGS
 # ================================================
 def gerar_embeddings(df):
 
     textos = df["informacao"].tolist()
 
     response = client.embeddings.create(
-        model="text-embedding-3-larger",
+        model=EMBEDDING_MODEL,
         input=textos
     )
 
@@ -94,35 +86,21 @@ def gerar_embeddings(df):
 
     return df
 
-
-# ================================================
-# 💾 SALVAR EMBEDDINGS
-# ================================================
 def salvar_embeddings(df):
-
-    with open("embeddings.pkl", "wb") as f:
+    with open(ARQUIVO_EMBEDDINGS, "wb") as f:
         pickle.dump(df, f)
 
-
-# ================================================
-# 📂 CARREGAR EMBEDDINGS
-# ================================================
 def carregar_embeddings():
-
-    with open("embeddings.pkl", "rb") as f:
+    with open(ARQUIVO_EMBEDDINGS, "rb") as f:
         return pickle.load(f)
 
-
 # ================================================
-# 📐 COSINE SIMILARITY
+# 📐 SIMILARIDADE
 # ================================================
 def cosine_similarity(v1, v2):
-
     v1 = np.array(v1)
     v2 = np.array(v2)
-
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
-
 
 # ================================================
 # 🔎 BUSCAR CONTEXTO
@@ -130,7 +108,7 @@ def cosine_similarity(v1, v2):
 def buscar_contexto(pergunta, df, top_k=4):
 
     pergunta_emb = client.embeddings.create(
-        model="text-embedding-3-small",
+        model=EMBEDDING_MODEL,
         input=pergunta
     ).data[0].embedding
 
@@ -147,26 +125,20 @@ def buscar_contexto(pergunta, df, top_k=4):
 
     return contexto
 
-import re
-
 # ================================================
-# 📂 qUEBRA DE LINHAS
+# 🎨 FORMATAÇÃO
 # ================================================
-
 def formatar_resposta(texto):
     texto = texto.replace("•", "<br>•")
     texto = texto.replace("- ", "<br>• ")
     return texto
-# ================================================
-# 📂 TRANSFORMA LINKS
-# ================================================
+
 def transformar_links(texto):
     url_pattern = r'(https?://[^\s]+)'
 
     def substituir(match):
         url = match.group(0)
 
-        # define texto baseado no conteúdo
         if "cardapio" in url.lower():
             texto_link = "📖 Ver cardápio"
         elif "reserva" in url.lower():
@@ -178,9 +150,6 @@ def transformar_links(texto):
 
     return re.sub(url_pattern, substituir, texto)
 
-# ================================================
-# 📂 TRANSFORMA LINKS
-# ================================================
 def transformar_links_markdown(texto):
     pattern = r'\[(.*?)\]\((https?://[^\s]+)\)'
 
@@ -193,14 +162,7 @@ def transformar_links_markdown(texto):
     return re.sub(pattern, substituir, texto)
 
 # ================================================
-# 📂 REMOVEN RMARKDOWNS LINKS
-# ================================================
-def remover_markdown_links(texto):
-    pattern = r'\[.*?\]\((https?://[^\s]+)\)'
-    return re.sub(pattern, r'\1', texto)
-
-# ================================================
-# 🤖 HISTÓRICO DO CHAT
+# 🤖 HISTÓRICO
 # ================================================
 historico = [
     {
@@ -227,7 +189,6 @@ Nunca escreva tudo em uma única linha.
     }
 ]
 
-
 # ================================================
 # 🤖 GERAR RESPOSTA
 # ================================================
@@ -238,28 +199,27 @@ def gerar_resposta(pergunta, df):
     historico.append({
         "role": "user",
         "content": f"""
-Base de conhecimento:
+Base:
 
 {contexto}
 
-Pergunta do cliente:
+Pergunta:
 {pergunta}
 """
     })
 
     response = client.chat.completions.create(
-
         model="gpt-4.1-mini",
-
         messages=historico
-
     )
 
     resposta = response.choices[0].message.content
-    resposta = remover_markdown_links(resposta)
-    resposta = formatar_resposta(resposta)
+
+    # 🔥 processamento correto
+    resposta = transformar_links_markdown(resposta)
     resposta = transformar_links(resposta)
-    
+    resposta = formatar_resposta(resposta)
+
     historico.append({
         "role": "assistant",
         "content": resposta
@@ -267,70 +227,69 @@ Pergunta do cliente:
 
     return resposta
 
-
 # ================================================
-# 🚀 CARREGAMENTO DA BASE
+# 🚀 CARREGAR BASE
 # ================================================
-print("🔄 Inicializando base de conhecimento...")
+print("🔄 Inicializando base...")
 
-if os.path.exists("embeddings.pkl"):
+# if os.path.exists(ARQUIVO_EMBEDDINGS):
 
-    print("⚡ Carregando embeddings já prontos...")
+#     print("⚡ Carregando embeddings...")
+#     df_base = carregar_embeddings()
 
+if False:
+
+    # print("⚡ Carregando embeddings...")
     df_base = carregar_embeddings()
 
 else:
 
-    print("📚 Lendo CSV...")
+    print("📚 CSV...")
     df_csv = carregar_base_csv("base-restaurante.csv")
 
-    print("📄 Lendo PDF do cardápio...")
+    print("📄 PDF...")
     df_pdf = carregar_base_pdf("cardapio.pdf")
 
-    print("🔗 Unindo bases...")
+    print("🔗 Unindo...")
     df_base = pd.concat([df_csv, df_pdf], ignore_index=True)
 
-    print("✂️ Criando chunks...")
+    print("✂️ Chunking...")
     df_base = criar_chunks(df_base)
 
-    print("🧠 Gerando embeddings...")
+    print("🧠 Embeddings...")
     df_base = gerar_embeddings(df_base)
 
-    print("💾 Salvando embeddings...")
+    print("💾 Salvando...")
     salvar_embeddings(df_base)
 
-print("✅ Base pronta!")
-
+print("✅ Pronto!")
 
 # ================================================
-# 🌐 ROTA FRONTEND
+# 🌐 ROTAS
 # ================================================
 @app.route("/")
 def index():
     return render_template("index.html")
 
-
-# ================================================
-# 🔎 API PERGUNTAR
-# ================================================
 @app.route("/perguntar")
 def perguntar():
+    try:
+        pergunta = request.args.get("pergunta")
 
-    pergunta = request.args.get("pergunta")
+        if not pergunta:
+            return jsonify({"erro": "Pergunta não enviada."})
 
-    if not pergunta:
-        return jsonify({"erro": "Pergunta não enviada."})
+        resposta = gerar_resposta(pergunta, df_base)
 
-    resposta = gerar_resposta(pergunta, df_base)
+        return jsonify({"resposta": resposta})
 
-    return jsonify({"resposta": resposta})
-
+    except Exception as e:
+        print("ERRO:", str(e))
+        return jsonify({"erro": str(e)})
 
 # ================================================
-# 🚀 EXECUÇÃO
+# 🚀 RUN
 # ================================================
 if __name__ == "__main__":
-
     port = int(os.environ.get("PORT", 5000))
-
     app.run(host="0.0.0.0", port=port)
