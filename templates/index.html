@@ -66,7 +66,7 @@ body {
     border-radius: 14px;
     max-width: 75%;
     font-size: 14px;
-    line-height: 1.4;
+    line-height: 1.5;
     word-break: break-word;
 }
 
@@ -93,16 +93,21 @@ body {
     margin-right: 6px;
 }
 
-/* LINK */
+/* BOTÃO LINK */
 .link-btn {
     display: inline-block;
     margin-top: 6px;
-    padding: 8px 12px;
-    background: #c89b5a;
-    color: #000;
-    border-radius: 8px;
+    padding: 10px 14px;
+    background: #C79A63;
+    color: #3E2615;
+    border-radius: 12px;
     text-decoration: none;
     font-weight: bold;
+    transition: 0.2s;
+}
+
+.link-btn:active {
+    transform: scale(0.96);
 }
 
 /* FAQ */
@@ -148,7 +153,6 @@ body {
 .typing {
     display: flex;
     gap: 4px;
-    padding: 10px;
 }
 
 .dot {
@@ -199,7 +203,7 @@ body {
 <script>
 
 /* CONFIG */
-const mensagemInicial = 
+const mensagemInicial =
 "Olá, sou o Mineirinho 🤠 assistente virtual do Restaurante Fogão Mineiro.<br>É só digitar sua dúvida!";
 
 const perguntas = [
@@ -255,6 +259,10 @@ function enviar() {
         .then(data => {
             stopTyping();
             renderResposta(data.resposta);
+        })
+        .catch(() => {
+            stopTyping();
+            addMsg("Erro ao conectar com servidor.", "bot");
         });
 }
 
@@ -270,17 +278,25 @@ function enviarFAQ(p) {
         });
 }
 
-/* RENDER */
+/* RENDER RESPOSTA (CORRIGIDO) */
 function renderResposta(texto) {
 
-    // transforma QUALQUER link em botão clicável
-    const regex = /(https?:\/\/[^\s]+)/g;
+    // Markdown [texto](link)
+    const markdownRegex = /\[([^\]]+)\]\((https?:\/\/[^\s]+)\)/g;
+    texto = texto.replace(markdownRegex, (_, titulo, url) => {
+        return `<a href="${url}" target="_blank" class="link-btn">${titulo}</a>`;
+    });
 
-    const novo = texto.replace(regex, url => {
+    // Links soltos
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    texto = texto.replace(urlRegex, (url) => {
         return `<a href="${url}" target="_blank" class="link-btn">Abrir link</a>`;
     });
 
-    addMsg(novo, "bot");
+    // Remove lixo de HTML quebrado
+    texto = texto.replace(/target="_blank".*?>/g, "");
+
+    addMsg(texto, "bot");
 }
 
 /* MSG */
@@ -319,7 +335,7 @@ function typing() {
     avatar.className = "avatar";
 
     const bubble = document.createElement("div");
-    bubble.className = "bubble typing";
+    bubble.className = "bubble";
     bubble.innerHTML = `
         <div class="typing">
             <div class="dot"></div>
