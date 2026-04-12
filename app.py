@@ -11,13 +11,14 @@ import pickle
 import os
 import re
 
+# 🔐 Usa variável de ambiente (CORRETO)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # ================================================
 # 🔥 CONFIG
 # ================================================
-EMBEDDING_MODEL = "text-embedding-3-large"
-ARQUIVO_EMBEDDINGS = f"embeddings_{EMBEDDING_MODEL}.pkl"
+EMBEDDING_MODEL = "text-embedding-3-small"
+ARQUIVO_EMBEDDINGS = "embeddings.pkl"
 
 # ================================================
 # 🚀 FLASK
@@ -26,7 +27,7 @@ app = Flask(__name__)
 CORS(app)
 
 # ================================================
-# 📚 BASE
+# 📚 CARREGAMENTO DAS BASES
 # ================================================
 def carregar_base_csv(caminho):
     return pd.read_csv(caminho)
@@ -92,7 +93,7 @@ def cosine_similarity(v1, v2):
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
 # ================================================
-# 🔎 BUSCA
+# 🔎 BUSCA CONTEXTO (RAG)
 # ================================================
 def buscar_contexto(pergunta, df, top_k=4):
 
@@ -113,56 +114,35 @@ def buscar_contexto(pergunta, df, top_k=4):
     ]
 
 # ================================================
-# 🎨 FORMATAÇÃO PROFISSIONAL
+# 🎨 FORMATAÇÃO DE RESPOSTA
 # ================================================
-
-def transformar_links_markdown(texto):
-    pattern = r'\[(.*?)\]\((https?://[^\s]+)\)'
+def transformar_links(texto):
+    """
+    Converte:
+    [Texto](link)
+    em botão HTML clicável (mobile-friendly)
+    """
+    pattern = r'\[(.*?)\]\((https?://[^\s)]+)\)'
 
     def substituir(match):
         label = match.group(1)
         url = match.group(2)
-
-        return f'''
-        <a href="{url}" target="_blank"
-        style="
-            display:inline-block;
-            margin-top:6px;
-            padding:6px 10px;
-            background:#C79A63;
-            color:#4A2C19;
-            border-radius:8px;
-            font-weight:bold;
-            text-decoration:none;
-        ">
-            {label}
-        </a>
-        '''
+        return f'<a href="{url}" target="_blank" class="link-btn">{label}</a>'
 
     return re.sub(pattern, substituir, texto)
 
+def formatar_lista(texto):
+    linhas = texto.split("\n")
+    linhas = [l.strip() for l in linhas if l.strip()]
 
-def garantir_lista(texto):
-    """
-    Se o modelo não retornar em lista, força formato
-    """
-    if "•" not in texto:
-        linhas = texto.split(". ")
-        texto = "\n".join([f"• {l.strip()}" for l in linhas if l.strip()])
+    if not any("•" in l for l in linhas):
+        linhas = [f"• {l}" for l in linhas]
 
-    return texto
-
+    return "<br>".join(linhas)
 
 def formatar_resposta(texto):
-
-    texto = garantir_lista(texto)
-
-    # quebra correta
-    texto = re.sub(r'\s*•', '<br>•', texto)
-
-    # remove quebra inicial
-    texto = texto.lstrip("<br>")
-
+    texto = transformar_links(texto)
+    texto = formatar_lista(texto)
     return texto
 
 # ================================================
@@ -172,45 +152,31 @@ historico = [
     {
         "role": "system",
         "content": """
-Você é um assistente especializado no restaurante Fogão Mineiro.
-Seu nome é Mineirinho.
+Você é um assistente do restaurante Fogão Mineiro chamado Mineirinho.
 
-Responda de forma educada e clara com um leve sotaque mineiro.
-Quando houver links, envie o hiperlink para o cliente clicar.
-Responda de maneira simples, curta e em tópicos, para que a resposta seja simples e rápida.
+Regras:
+- Seja educado
+- Fale levemente como mineiro
+- Seja direto
+- Responda em lista
+- Use frases curtas
+- Quando tiver link, use:
 
-FORMATAÇÃO OBRIGATÓRIA:
-- Sempre responda em lista com quebra de linha
-- Use um item por linha
-- Use este formato:
-
-• Item 1  
-• Item 2  
-• Item 3  
-
-Nunca escreva tudo em uma única linha.
+[Ver Cardápio](URL)
 """
     }
 ]
 
 # ================================================
-# 🤖 RESPOSTA
+# 🤖 GERA RESPOSTA
 # ================================================
 def gerar_resposta(pergunta, df):
 
-    contextos = buscar_contexto(pergunta, df)
-
-    contexto = "\n".join(contextos)
+    contexto = "\n".join(buscar_contexto(pergunta, df))
 
     historico.append({
         "role": "user",
-        "content": f"""
-Base:
-{contexto}
-
-Pergunta:
-{pergunta}
-"""
+        "content": f"Base:\n{contexto}\nPergunta:\n{pergunta}"
     })
 
     response = client.chat.completions.create(
@@ -220,8 +186,6 @@ Pergunta:
 
     resposta = response.choices[0].message.content
 
-    # 🔥 PROCESSAMENTO FINAL
-    resposta = transformar_links_markdown(resposta)
     resposta = formatar_resposta(resposta)
 
     historico.append({
@@ -232,24 +196,26 @@ Pergunta:
     return resposta
 
 # ================================================
-# 🚀 CARREGAMENTO
+# 🚀 INICIALIZAÇÃO
 # ================================================
 print("🔄 Inicializando...")
 
 if os.path.exists(ARQUIVO_EMBEDDINGS):
-    print("⚡ Carregando embeddings...")
+    print("⚡ Carregando embeddings salvos...")
     df_base = carregar_embeddings()
 else:
-    print("📚 Criando base...")
+    print("📚 Criando nova base...")
+
     df_csv = carregar_base_csv("base-restaurante.csv")
     df_pdf = carregar_base_pdf("cardapio.pdf")
 
     df_base = pd.concat([df_csv, df_pdf], ignore_index=True)
     df_base = criar_chunks(df_base)
     df_base = gerar_embeddings(df_base)
+
     salvar_embeddings(df_base)
 
-print("✅ Pronto!")
+print("✅ Sistema pronto!")
 
 # ================================================
 # 🌐 ROTAS
@@ -260,19 +226,13 @@ def index():
 
 @app.route("/perguntar")
 def perguntar():
-    try:
-        pergunta = request.args.get("pergunta")
+    pergunta = request.args.get("pergunta")
 
-        if not pergunta:
-            return jsonify({"erro": "Pergunta não enviada."})
+    if not pergunta:
+        return jsonify({"erro": "Pergunta não enviada"})
 
-        resposta = gerar_resposta(pergunta, df_base)
-
-        return jsonify({"resposta": resposta})
-
-    except Exception as e:
-        print("ERRO:", str(e))
-        return jsonify({"erro": str(e)})
+    resposta = gerar_resposta(pergunta, df_base)
+    return jsonify({"resposta": resposta})
 
 # ================================================
 # 🚀 RUN
