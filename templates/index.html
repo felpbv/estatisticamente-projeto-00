@@ -1,296 +1,265 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Assistente Virtual - Sabores da Terra</title>
 
-<title>Assistente - Fogão Mineiro</title>
+    <!-- 📱 MOBILE -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-body {
-    margin: 0;
-    font-family: Arial, Helvetica, sans-serif;
-    background: linear-gradient(180deg, #3b1f14, #6b3b23);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
+    <!-- 🎨 ESTILO -->
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: linear-gradient(180deg, #5C3A21, #7A4A2E);
+            color: #F5E6C8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
 
-.chat-container {
-    width: 100%;
-    max-width: 420px;
-    height: 95vh;
-    background-color: #5a2f1a;
-    border-radius: 20px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
+        .chat-container {
+            width: 100%;
+            max-width: 420px;
+            height: 95vh;
+            background-color: #3E2615;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-.logo-area {
-    background: #e6d3b3;
-    text-align: center;
-    padding: 10px;
-}
+        /* 🖼️ LOGO */
+        .logo-area {
+            background: #F5E6C8;
+            padding: 12px;
+            text-align: center;
+        }
 
-.logo-area img {
-    max-height: 80px;
-}
+        .logo-area img {
+            max-height: 90px;
+        }
 
-.messages {
-    flex: 1;
-    padding: 12px;
-    overflow-y: auto;
-}
+        /* 💬 MENSAGENS */
+        .messages {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+        }
 
-.message {
-    display: flex;
-    margin-bottom: 10px;
-}
+        .message {
+            padding: 10px 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            max-width: 85%;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
 
-.bubble {
-    padding: 10px 12px;
-    border-radius: 14px;
-    max-width: 75%;
-    font-size: 14px;
-    line-height: 1.5;
-}
+        .bot {
+            background: #6D4B2F;
+        }
 
-.bot .bubble {
-    background-color: #7a4a2e;
-    color: #fff;
-}
+        .user {
+            background: #C79A63;
+            color: #3E2615;
+            align-self: flex-end;
+        }
 
-.user {
-    justify-content: flex-end;
-}
+        /* 🔥 BOTÃO DE LINK (CORREÇÃO PRINCIPAL) */
+        .link-btn {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 10px 14px;
+            background-color: #C79A63;
+            color: #3E2615;
+            border-radius: 8px;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 14px;
 
-.user .bubble {
-    background-color: #c89b5a;
-    color: #000;
-}
+            /* MOBILE FIX */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-/* BOTÃO LINK */
-.link-btn {
-    display: inline-block;
-    margin-top: 6px;
-    padding: 10px 14px;
-    background: #C79A63;
-    color: #3E2615;
-    border-radius: 12px;
-    text-decoration: none;
-    font-weight: bold;
-}
+        .link-btn:active {
+            transform: scale(0.97);
+        }
 
-.faq {
-    padding: 10px;
-}
+        /* ❓ FAQ */
+        .faq {
+            padding: 10px;
+            background: #4A2C19;
+        }
 
-.faq button {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 6px;
-    border: none;
-    border-radius: 10px;
-    background: #7a4a2e;
-    color: #fff;
-}
+        .faq button {
+            width: 100%;
+            background: #6D4B2F;
+            color: #F5E6C8;
+            border: none;
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 6px;
+            cursor: pointer;
+        }
 
-.input-area {
-    display: flex;
-    padding: 10px;
-    background: #3b1f14;
-}
+        /* ⌨️ INPUT */
+        .input-area {
+            display: flex;
+            padding: 10px;
+            background: #2A180D;
+        }
 
-.input-area input {
-    flex: 1;
-    padding: 10px;
-    border-radius: 10px;
-    border: none;
-    font-size: 14px;
-}
+        .input-area input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+            outline: none;
+        }
 
-.input-area button {
-    margin-left: 8px;
-    padding: 10px;
-    border: none;
-    border-radius: 10px;
-    background: #c89b5a;
-    font-weight: bold;
-}
+        .input-area button {
+            margin-left: 8px;
+            background: #C79A63;
+            border: none;
+            border-radius: 8px;
+            padding: 0 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
-/* typing */
-.typing {
-    display: flex;
-    gap: 4px;
-}
-
-.dot {
-    width: 6px;
-    height: 6px;
-    background: #fff;
-    border-radius: 50%;
-    animation: blink 1.2s infinite;
-}
-
-.dot:nth-child(2){animation-delay:0.2s;}
-.dot:nth-child(3){animation-delay:0.4s;}
-
-@keyframes blink {
-    0%,80%,100%{opacity:0;}
-    40%{opacity:1;}
-}
-
-@media (max-width: 480px) {
-    .chat-container {
-        height: 100vh;
-        border-radius: 0;
-    }
-}
-</style>
+        /* 📱 MOBILE */
+        @media (max-width: 480px) {
+            .chat-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
 <div class="chat-container">
 
-<div class="logo-area">
-    <img src="/static/logo.png">
-</div>
+    <!-- LOGO -->
+    <div class="logo-area">
+        <img src="/static/logo.png" alt="Logo">
+    </div>
 
-<div class="messages" id="messages"></div>
+    <!-- MENSAGENS -->
+    <div class="messages" id="messages"></div>
 
-<div class="faq" id="faq"></div>
+    <!-- FAQ -->
+    <div class="faq" id="faq"></div>
 
-<div class="input-area">
-    <input id="input" placeholder="Digite sua dúvida..." />
-    <button onclick="enviar()">Enviar</button>
-</div>
+    <!-- INPUT -->
+    <div class="input-area">
+        <input type="text" id="input" placeholder="Digite sua dúvida..." />
+        <button onclick="enviarMensagem()">Enviar</button>
+    </div>
 
 </div>
 
 <script>
+    const messages = document.getElementById("messages");
+    const input = document.getElementById("input");
+    const faqDiv = document.getElementById("faq");
 
-/* CONFIG */
-const mensagemInicial =
-"Olá, sou o Mineirinho 🤠 assistente virtual.<br>Digite sua dúvida!";
+    // 👋 BOAS-VINDAS
+    adicionarMensagem(
+        "Olá! Sou a assistente virtual do restaurante 😊<br>Digite sua dúvida abaixo.",
+        "bot"
+    );
 
-const perguntas = [
-"Formas de pagamento!",
-"Horário de funcionamento!",
-"Cardápio online!",
-"Reservas"
-];
+    // ❓ FAQ
+    const perguntas = [
+        "Aceita VR?",
+        "Qual o horário de funcionamento?",
+        "Tem cardápio?",
+        "Tem promoção?"
+    ];
 
-const messages = document.getElementById("messages");
-const input = document.getElementById("input");
-const faq = document.getElementById("faq");
+    perguntas.forEach(p => {
+        const btn = document.createElement("button");
+        btn.innerText = p;
+        btn.onclick = () => enviarPerguntaFAQ(p);
+        faqDiv.appendChild(btn);
+    });
 
-/* BOAS VINDAS */
-addMsg(mensagemInicial, "bot");
+    // ⌨️ ENTER ENVIA
+    input.addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+            enviarMensagem();
+        }
+    });
 
-/* FAQ */
-perguntas.forEach(p => {
-    const btn = document.createElement("button");
-    btn.innerText = p;
-    btn.onclick = () => enviarFAQ(p);
-    faq.appendChild(btn);
-});
+    // 📤 ENVIAR
+    function enviarMensagem() {
+        const texto = input.value.trim();
+        if (!texto) return;
 
-/* ENTER */
-input.addEventListener("keydown", e => {
-    if (e.key === "Enter") enviar();
-});
+        adicionarMensagem(texto, "user");
+        input.value = "";
 
-/* ENVIO */
-function enviar() {
-    const texto = input.value.trim();
-    if (!texto) return;
+        mostrarDigitando();
 
-    addMsg(texto, "user");
-    input.value = "";
-    typing();
-
-    fetch(`/perguntar?pergunta=${encodeURIComponent(texto)}`)
-        .then(r => r.json())
-        .then(data => {
-            stopTyping();
-            renderResposta(data.resposta);
-        });
-}
-
-function enviarFAQ(p) {
-    addMsg(p, "user");
-    typing();
-
-    fetch(`/perguntar?pergunta=${encodeURIComponent(p)}`)
-        .then(r => r.json())
-        .then(data => {
-            stopTyping();
-            renderResposta(data.resposta);
-        });
-}
-
-/* 🔥 FUNÇÃO CORRETA */
-function renderResposta(texto) {
-
-    // remove QUALQUER HTML
-    texto = texto.replace(/<[^>]*>?/gm, "");
-
-    // pega link
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-
-    if (urlRegex.test(texto)) {
-        const url = texto.match(urlRegex)[0];
-
-        texto = texto.replace(url, "") +
-        `<br><a href="${url}" target="_blank" class="link-btn">Abrir link</a>`;
+        fetch(`/perguntar?pergunta=${encodeURIComponent(texto)}`)
+            .then(res => res.json())
+            .then(data => {
+                removerDigitando();
+                adicionarMensagem(data.resposta, "bot");
+            })
+            .catch(() => {
+                removerDigitando();
+                adicionarMensagem("Erro ao conectar.", "bot");
+            });
     }
 
-    addMsg(texto, "bot");
-}
+    function enviarPerguntaFAQ(pergunta) {
+        adicionarMensagem(pergunta, "user");
+        mostrarDigitando();
 
-/* MSG */
-function addMsg(texto, tipo) {
-    const msg = document.createElement("div");
-    msg.className = `message ${tipo}`;
+        fetch(`/perguntar?pergunta=${encodeURIComponent(pergunta)}`)
+            .then(res => res.json())
+            .then(data => {
+                removerDigitando();
+                adicionarMensagem(data.resposta, "bot");
+            });
+    }
 
-    const bubble = document.createElement("div");
-    bubble.className = "bubble";
-    bubble.innerHTML = texto;
+    // 💬 ADICIONAR MENSAGEM (🔥 CORREÇÃO PRINCIPAL)
+    function adicionarMensagem(texto, tipo) {
+        const div = document.createElement("div");
+        div.className = `message ${tipo}`;
 
-    msg.appendChild(bubble);
-    messages.appendChild(msg);
+        // 🔥 ESSENCIAL: renderiza HTML (links + <br>)
+        div.innerHTML = texto;
 
-    messages.scrollTop = messages.scrollHeight;
-}
+        messages.appendChild(div);
 
-/* typing */
-function typing() {
-    const msg = document.createElement("div");
-    msg.id = "typing";
-    msg.className = "message bot";
+        setTimeout(() => {
+            messages.scrollTop = messages.scrollHeight;
+        }, 50);
+    }
 
-    const bubble = document.createElement("div");
-    bubble.className = "bubble";
-    bubble.innerHTML = `
-        <div class="typing">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-        </div>
-    `;
+    // ⏳ LOADING
+    function mostrarDigitando() {
+        const div = document.createElement("div");
+        div.className = "message bot";
+        div.id = "digitando";
+        div.innerHTML = "Digitando...";
+        messages.appendChild(div);
+    }
 
-    msg.appendChild(bubble);
-    messages.appendChild(msg);
-}
-
-function stopTyping() {
-    const t = document.getElementById("typing");
-    if (t) t.remove();
-}
-
+    function removerDigitando() {
+        const el = document.getElementById("digitando");
+        if (el) el.remove();
+    }
 </script>
 
 </body>
