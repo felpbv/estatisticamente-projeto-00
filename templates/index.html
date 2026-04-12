@@ -47,36 +47,62 @@ body {
     overflow-y: auto;
 }
 
+/* ANIMAÇÃO */
 .message {
-    padding: 10px;
-    border-radius: 12px;
-    margin-bottom: 8px;
-    max-width: 85%;
-    font-size: 14px; /* 👈 fonte reduzida */
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: 10px;
+    animation: fadeIn 0.3s ease;
 }
 
-.bot {
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(10px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+
+/* BALÕES */
+.bubble {
+    padding: 10px 12px;
+    border-radius: 14px;
+    max-width: 75%;
+    font-size: 14px;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+/* BOT */
+.bot .bubble {
     background-color: #7a4a2e;
     color: #fff;
 }
 
+/* USER */
 .user {
-    background-color: #c89b5a;
-    color: #000;
-    margin-left: auto;
+    justify-content: flex-end;
 }
 
-/* LINK BOTÃO */
-.link-btn {
-    display: inline-block;
+.user .bubble {
     background-color: #c89b5a;
     color: #000;
-    padding: 10px 14px;
-    border-radius: 10px;
+}
+
+/* AVATAR */
+.avatar {
+    width: 32px;
+    height: 32px;
+    margin-right: 6px;
+}
+
+/* LINK */
+.link-btn {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 8px 12px;
+    background: #c89b5a;
+    color: #000;
+    border-radius: 8px;
     text-decoration: none;
     font-weight: bold;
-    margin-top: 8px;
-    font-size: 14px;
 }
 
 /* FAQ */
@@ -92,7 +118,6 @@ body {
     border-radius: 10px;
     background: #7a4a2e;
     color: #fff;
-    font-size: 14px;
 }
 
 /* INPUT */
@@ -112,11 +137,34 @@ body {
 
 .input-area button {
     margin-left: 8px;
-    padding: 10px 14px;
+    padding: 10px;
     border: none;
     border-radius: 10px;
     background: #c89b5a;
     font-weight: bold;
+}
+
+/* TYPING */
+.typing {
+    display: flex;
+    gap: 4px;
+    padding: 10px;
+}
+
+.dot {
+    width: 6px;
+    height: 6px;
+    background: #fff;
+    border-radius: 50%;
+    animation: blink 1.2s infinite;
+}
+
+.dot:nth-child(2) {animation-delay: 0.2s;}
+.dot:nth-child(3) {animation-delay: 0.4s;}
+
+@keyframes blink {
+    0%, 80%, 100% {opacity: 0;}
+    40% {opacity: 1;}
 }
 
 /* MOBILE */
@@ -133,32 +181,26 @@ body {
 
 <div class="chat-container">
 
-    <!-- LOGO -->
-    <div class="logo-area">
-        <img src="/static/logo.png">
-    </div>
+<div class="logo-area">
+    <img src="/static/logo.png">
+</div>
 
-    <!-- MENSAGENS -->
-    <div class="messages" id="messages"></div>
+<div class="messages" id="messages"></div>
 
-    <!-- FAQ -->
-    <div class="faq" id="faq"></div>
+<div class="faq" id="faq"></div>
 
-    <!-- INPUT -->
-    <div class="input-area">
-        <input id="input" placeholder="Digite sua dúvida..." />
-        <button onclick="enviar()">Enviar</button>
-    </div>
+<div class="input-area">
+    <input id="input" placeholder="Digite sua dúvida..." />
+    <button onclick="enviar()">Enviar</button>
+</div>
 
 </div>
 
 <script>
 
-/* ============================
-   CONFIGURAÇÃO EDITÁVEL
-============================ */
-const mensagemInicial =
-"Olá, sou o Mineirinho assistente virtual do Restaurante Fogão Mineiro 😊<br>É só digitar a sua dúvida.";
+/* CONFIG */
+const mensagemInicial = 
+"Olá, sou o Mineirinho 🤠 assistente virtual do Restaurante Fogão Mineiro.<br>É só digitar sua dúvida!";
 
 const perguntas = [
 "Formas de pagamento!",
@@ -167,18 +209,26 @@ const perguntas = [
 "Reservas"
 ];
 
-/* ============================
-   ELEMENTOS
-============================ */
 const messages = document.getElementById("messages");
 const input = document.getElementById("input");
 const faq = document.getElementById("faq");
 
-/* ============================
-   BOAS-VINDAS
-============================ */
-addMsg(mensagemInicial, "bot");
+/* HISTÓRICO */
+function salvarHistorico() {
+    localStorage.setItem("chat", messages.innerHTML);
+}
 
+function carregarHistorico() {
+    const hist = localStorage.getItem("chat");
+    if (hist) {
+        messages.innerHTML = hist;
+    } else {
+        addMsg(mensagemInicial, "bot");
+    }
+}
+carregarHistorico();
+
+/* FAQ */
 perguntas.forEach(p => {
     const btn = document.createElement("button");
     btn.innerText = p;
@@ -186,88 +236,108 @@ perguntas.forEach(p => {
     faq.appendChild(btn);
 });
 
-/* ============================
-   ENTER ENVIA (MOBILE INCLUSO)
-============================ */
+/* ENTER */
 input.addEventListener("keydown", e => {
     if (e.key === "Enter") enviar();
 });
 
-/* ============================
-   ENVIO
-============================ */
+/* ENVIO */
 function enviar() {
     const texto = input.value.trim();
     if (!texto) return;
 
     addMsg(texto, "user");
     input.value = "";
-    digitando();
+    typing();
 
     fetch(`/perguntar?pergunta=${encodeURIComponent(texto)}`)
         .then(r => r.json())
         .then(data => {
-            pararDigitando();
+            stopTyping();
             renderResposta(data.resposta);
-        })
-        .catch(() => {
-            pararDigitando();
-            addMsg("Erro ao conectar com servidor.", "bot");
         });
 }
 
 function enviarFAQ(p) {
     addMsg(p, "user");
-    digitando();
+    typing();
 
     fetch(`/perguntar?pergunta=${encodeURIComponent(p)}`)
         .then(r => r.json())
         .then(data => {
-            pararDigitando();
+            stopTyping();
             renderResposta(data.resposta);
         });
 }
 
-/* ============================
-   RENDER RESPOSTA (LINK FIX MOBILE)
-============================ */
+/* RENDER */
 function renderResposta(texto) {
 
-    // Detecta link markdown
-    const regex = /\[([^\]]+)\]\((https?:\/\/[^\s]+)\)/g;
+    // transforma QUALQUER link em botão clicável
+    const regex = /(https?:\/\/[^\s]+)/g;
 
-    if (regex.test(texto)) {
-        const novo = texto.replace(regex, (_, txt, url) => {
-            return `<a href="${url}" target="_blank" class="link-btn">${txt}</a>`;
-        });
-        addMsg(novo, "bot");
-    } else {
-        addMsg(texto, "bot");
-    }
+    const novo = texto.replace(regex, url => {
+        return `<a href="${url}" target="_blank" class="link-btn">Abrir link</a>`;
+    });
+
+    addMsg(novo, "bot");
 }
 
-/* ============================
-   UTIL
-============================ */
+/* MSG */
 function addMsg(texto, tipo) {
-    const div = document.createElement("div");
-    div.className = `message ${tipo}`;
-    div.innerHTML = texto;
-    messages.appendChild(div);
+
+    const msg = document.createElement("div");
+    msg.className = `message ${tipo}`;
+
+    if (tipo === "bot") {
+        const avatar = document.createElement("img");
+        avatar.src = "/static/bot.png";
+        avatar.className = "avatar";
+        msg.appendChild(avatar);
+    }
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.innerHTML = texto;
+
+    msg.appendChild(bubble);
+    messages.appendChild(msg);
+
+    messages.scrollTop = messages.scrollHeight;
+
+    salvarHistorico();
+}
+
+/* TYPING */
+function typing() {
+    const msg = document.createElement("div");
+    msg.id = "typing";
+    msg.className = "message bot";
+
+    const avatar = document.createElement("img");
+    avatar.src = "/static/bot.png";
+    avatar.className = "avatar";
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble typing";
+    bubble.innerHTML = `
+        <div class="typing">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    `;
+
+    msg.appendChild(avatar);
+    msg.appendChild(bubble);
+    messages.appendChild(msg);
+
     messages.scrollTop = messages.scrollHeight;
 }
 
-function digitando() {
-    const d = document.createElement("div");
-    d.id = "digitando";
-    d.className = "message bot";
-    d.innerText = "Digitando...";
-    messages.appendChild(d);
-}
-
-function pararDigitando() {
-    const d = document.getElementById("digitando");
-    if (d) d.remove();
+function stopTyping() {
+    const t = document.getElementById("typing");
+    if (t) t.remove();
 }
 
 </script>
