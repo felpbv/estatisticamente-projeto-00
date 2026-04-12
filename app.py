@@ -17,7 +17,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # ================================================
 # 🔥 CONFIG
 # ================================================
-EMBEDDING_MODEL = "text-embedding-3-small"
+EMBEDDING_MODEL = "text-embedding-3-large"
 ARQUIVO_EMBEDDINGS = "embeddings.pkl"
 
 # ================================================
