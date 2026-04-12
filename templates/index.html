@@ -17,7 +17,6 @@ body {
     height: 100vh;
 }
 
-/* CONTAINER */
 .chat-container {
     width: 100%;
     max-width: 420px;
@@ -29,7 +28,6 @@ body {
     overflow: hidden;
 }
 
-/* LOGO */
 .logo-area {
     background: #e6d3b3;
     text-align: center;
@@ -40,43 +38,30 @@ body {
     max-height: 80px;
 }
 
-/* MENSAGENS */
 .messages {
     flex: 1;
     padding: 12px;
     overflow-y: auto;
 }
 
-/* ANIMAÇÃO */
 .message {
     display: flex;
-    align-items: flex-end;
     margin-bottom: 10px;
-    animation: fadeIn 0.3s ease;
 }
 
-@keyframes fadeIn {
-    from {opacity: 0; transform: translateY(10px);}
-    to {opacity: 1; transform: translateY(0);}
-}
-
-/* BALÕES */
 .bubble {
     padding: 10px 12px;
     border-radius: 14px;
     max-width: 75%;
     font-size: 14px;
     line-height: 1.5;
-    word-break: break-word;
 }
 
-/* BOT */
 .bot .bubble {
     background-color: #7a4a2e;
     color: #fff;
 }
 
-/* USER */
 .user {
     justify-content: flex-end;
 }
@@ -84,13 +69,6 @@ body {
 .user .bubble {
     background-color: #c89b5a;
     color: #000;
-}
-
-/* AVATAR */
-.avatar {
-    width: 32px;
-    height: 32px;
-    margin-right: 6px;
 }
 
 /* BOTÃO LINK */
@@ -103,14 +81,8 @@ body {
     border-radius: 12px;
     text-decoration: none;
     font-weight: bold;
-    transition: 0.2s;
 }
 
-.link-btn:active {
-    transform: scale(0.96);
-}
-
-/* FAQ */
 .faq {
     padding: 10px;
 }
@@ -125,7 +97,6 @@ body {
     color: #fff;
 }
 
-/* INPUT */
 .input-area {
     display: flex;
     padding: 10px;
@@ -149,7 +120,7 @@ body {
     font-weight: bold;
 }
 
-/* TYPING */
+/* typing */
 .typing {
     display: flex;
     gap: 4px;
@@ -163,15 +134,14 @@ body {
     animation: blink 1.2s infinite;
 }
 
-.dot:nth-child(2) {animation-delay: 0.2s;}
-.dot:nth-child(3) {animation-delay: 0.4s;}
+.dot:nth-child(2){animation-delay:0.2s;}
+.dot:nth-child(3){animation-delay:0.4s;}
 
 @keyframes blink {
-    0%, 80%, 100% {opacity: 0;}
-    40% {opacity: 1;}
+    0%,80%,100%{opacity:0;}
+    40%{opacity:1;}
 }
 
-/* MOBILE */
 @media (max-width: 480px) {
     .chat-container {
         height: 100vh;
@@ -204,11 +174,11 @@ body {
 
 /* CONFIG */
 const mensagemInicial =
-"Olá, sou o Mineirinho 🤠 assistente virtual do Restaurante Fogão Mineiro.<br>É só digitar sua dúvida!";
+"Olá, sou o Mineirinho 🤠 assistente virtual.<br>Digite sua dúvida!";
 
 const perguntas = [
 "Formas de pagamento!",
-"Dia e horário de funcionamento!",
+"Horário de funcionamento!",
 "Cardápio online!",
 "Reservas"
 ];
@@ -217,20 +187,8 @@ const messages = document.getElementById("messages");
 const input = document.getElementById("input");
 const faq = document.getElementById("faq");
 
-/* HISTÓRICO */
-function salvarHistorico() {
-    localStorage.setItem("chat", messages.innerHTML);
-}
-
-function carregarHistorico() {
-    const hist = localStorage.getItem("chat");
-    if (hist) {
-        messages.innerHTML = hist;
-    } else {
-        addMsg(mensagemInicial, "bot");
-    }
-}
-carregarHistorico();
+/* BOAS VINDAS */
+addMsg(mensagemInicial, "bot");
 
 /* FAQ */
 perguntas.forEach(p => {
@@ -259,10 +217,6 @@ function enviar() {
         .then(data => {
             stopTyping();
             renderResposta(data.resposta);
-        })
-        .catch(() => {
-            stopTyping();
-            addMsg("Erro ao conectar com servidor.", "bot");
         });
 }
 
@@ -278,39 +232,29 @@ function enviarFAQ(p) {
         });
 }
 
-/* RENDER RESPOSTA (CORRIGIDO) */
+/* 🔥 FUNÇÃO CORRETA */
 function renderResposta(texto) {
 
-    // Markdown [texto](link)
-    const markdownRegex = /\[([^\]]+)\]\((https?:\/\/[^\s]+)\)/g;
-    texto = texto.replace(markdownRegex, (_, titulo, url) => {
-        return `<a href="${url}" target="_blank" class="link-btn">${titulo}</a>`;
-    });
+    // remove QUALQUER HTML
+    texto = texto.replace(/<[^>]*>?/gm, "");
 
-    // Links soltos
+    // pega link
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    texto = texto.replace(urlRegex, (url) => {
-        return `<a href="${url}" target="_blank" class="link-btn">Abrir link</a>`;
-    });
 
-    // Remove lixo de HTML quebrado
-    texto = texto.replace(/target="_blank".*?>/g, "");
+    if (urlRegex.test(texto)) {
+        const url = texto.match(urlRegex)[0];
+
+        texto = texto.replace(url, "") +
+        `<br><a href="${url}" target="_blank" class="link-btn">Abrir link</a>`;
+    }
 
     addMsg(texto, "bot");
 }
 
 /* MSG */
 function addMsg(texto, tipo) {
-
     const msg = document.createElement("div");
     msg.className = `message ${tipo}`;
-
-    if (tipo === "bot") {
-        const avatar = document.createElement("img");
-        avatar.src = "/static/bot.png";
-        avatar.className = "avatar";
-        msg.appendChild(avatar);
-    }
 
     const bubble = document.createElement("div");
     bubble.className = "bubble";
@@ -320,19 +264,13 @@ function addMsg(texto, tipo) {
     messages.appendChild(msg);
 
     messages.scrollTop = messages.scrollHeight;
-
-    salvarHistorico();
 }
 
-/* TYPING */
+/* typing */
 function typing() {
     const msg = document.createElement("div");
     msg.id = "typing";
     msg.className = "message bot";
-
-    const avatar = document.createElement("img");
-    avatar.src = "/static/bot.png";
-    avatar.className = "avatar";
 
     const bubble = document.createElement("div");
     bubble.className = "bubble";
@@ -344,11 +282,8 @@ function typing() {
         </div>
     `;
 
-    msg.appendChild(avatar);
     msg.appendChild(bubble);
     messages.appendChild(msg);
-
-    messages.scrollTop = messages.scrollHeight;
 }
 
 function stopTyping() {
